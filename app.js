@@ -9,6 +9,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => res.type('html').send(""));
+app.get("/healthz", (req, res) => res.statusCode = 200);
 
 app.post("/api/create-article", async (req, res) => {
   try {
