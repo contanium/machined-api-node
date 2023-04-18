@@ -17,6 +17,7 @@ app.post("/api/create-article", async (req, res) => {
     const app = await security.authenticate(req);
     const topic = req.body.topic;
     var title = req.body.title;
+    var model = req.body.model;
     var keyword = req.body.keyword;
     var outline = req.body.outline;
     var article = req.body.article;
@@ -35,7 +36,7 @@ app.post("/api/create-article", async (req, res) => {
     }
 
     if (!title) {
-      const prompt = await openai.prompt("generate-title", { topic, title, outline, keyword });
+      const prompt = await openai.prompt("generate-title", { topic, title, outline, keyword, model });
       const response = await openai.chat(prompt.messages, prompt.options);
 
       title = response[0].message.content.replaceAll("\"", "");
@@ -44,7 +45,7 @@ app.post("/api/create-article", async (req, res) => {
     var defer = new Promise(async (resolve, reject) => {
 
       if (!outline) {
-        const prompt = await openai.prompt("generate-outline", { topic, title, outline, keyword });
+        const prompt = await openai.prompt("generate-outline", { topic, title, outline, keyword, model });
         const response = await openai.chat(prompt.messages, prompt.options);
 
         outline = response[0].message.content;
@@ -55,7 +56,7 @@ app.post("/api/create-article", async (req, res) => {
 
         await Promise.all(
           await outline.split("\n\n").map(async (section, index) => {
-            const prompt = await openai.prompt("write-section", { topic, title, outline, section, keyword });
+            const prompt = await openai.prompt("write-section", { topic, title, outline, section, keyword, model });
             const response = await openai.chat(prompt.messages, prompt.options);
 
             sections[index] = response[0].message.content;

@@ -23,7 +23,7 @@ async function prompt(prompt, options = {}) {
         messages.push({ role: message.role, content: content });
     }
 
-    return { messages: messages, options: { model: prompt.data[0].model.name, temperature: prompt.data[0].temperature, top_p: prompt.data[0].top_p } };
+    return { messages: messages, options: { model: options.model || prompt.data[0].model.name, temperature: prompt.data[0].temperature, top_p: prompt.data[0].top_p } };
 }
 
 async function moderate(input, options = {}) {
