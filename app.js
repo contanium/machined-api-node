@@ -1,9 +1,10 @@
 const security = require("./utils/security");
 const openai = require("./utils/openai");
 const express = require("express");
+const axios = require("axios");
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,6 +20,7 @@ app.post("/api/create-article", async (req, res) => {
     var keyword = req.body.keyword;
     var outline = req.body.outline;
     var article = req.body.article;
+    var callback = req.body.callback;
 
     if (!app) {
       res.statusCode = 401;
@@ -39,26 +41,46 @@ app.post("/api/create-article", async (req, res) => {
       title = response[0].message.content.replaceAll("\"", "");
     }
 
-    if (!outline) {
-      const prompt = await openai.prompt("generate-outline", { topic, title, outline, keyword });
-      const response = await openai.chat(prompt.messages, prompt.options);
+    var defer = new Promise(async (resolve, reject) => {
 
-      outline = response[0].message.content;
-    }
+      if (!outline) {
+        const prompt = await openai.prompt("generate-outline", { topic, title, outline, keyword });
+        const response = await openai.chat(prompt.messages, prompt.options);
 
-    if (!article) {
-      const sections = [];
+        outline = response[0].message.content;
+      }
 
-      await Promise.all(
-        await outline.split("\n\n").map(async (section, index) => {
-          const prompt = await openai.prompt("write-section", { topic, title, outline, section, keyword });
-          const response = await openai.chat(prompt.messages, prompt.options);
+      if (!article) {
+        const sections = [];
 
-          sections[index] = response[0].message.content;
-        })
-      );
+        await Promise.all(
+          await outline.split("\n\n").map(async (section, index) => {
+            const prompt = await openai.prompt("write-section", { topic, title, outline, section, keyword });
+            const response = await openai.chat(prompt.messages, prompt.options);
 
-      article = sections.join("\n\n").replaceAll("## Introduction\n", "");
+            sections[index] = response[0].message.content;
+          })
+        );
+
+        article = sections.join("\n\n").replaceAll("## Introduction\n", "");
+      }
+
+      if (callback) {
+        try {
+          await axios.create({headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.NICHELY_API_KEY}`
+            }
+          }).post(callback, { title: title, content: article });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    });
+
+    // If no callback, wait for article to be done
+    if (!callback) {
+      await defer;
     }
 
     const output = { topic, title, outline, article };
