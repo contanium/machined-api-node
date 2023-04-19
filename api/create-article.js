@@ -3,6 +3,7 @@ const openai = require("./../utils/openai");
 const express = require("express");
 const router = express.Router();
 const crypto = require("crypto");
+const axios = require("axios");
 
 router.post("/create-article", async (req, res) => {
     try {
