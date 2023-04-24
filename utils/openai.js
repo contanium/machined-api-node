@@ -1,5 +1,6 @@
 const axios = require("axios");
 const supabase = require("./supabase");
+const limiter = require("async-rate-limit");
 
 const openai = axios.create({
     baseURL: "https://api.openai.com/v1",
@@ -8,6 +9,13 @@ const openai = axios.create({
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
     },
 });
+
+const limits = {};
+
+// TODO: Configure rate limits from database configuration
+limits["gpt-3.5-turbo"] = new limiter({ limit: 30, timespan: 1000 });
+limits["gpt-4"] = new limiter({ limit: 3, timespan: 1000 });
+
 
 async function prompt(prompt, options = {}) {
     var prompt = await supabase.from("openai_prompts").select('*, model (name)').eq("name", prompt).order('version', { ascending: false }).limit(1);
@@ -41,6 +49,7 @@ async function moderate(input, options = {}) {
     } catch (error) {
         console.error("OpenAI: Error getting moderation:", error);
         await supabase.from("openai_requests").insert({ endpoint: "/moderations", request: request, response: error, success: false });
+        throw error;
     }
 }
 
@@ -49,6 +58,9 @@ async function chat(messages, options = {}) {
     var response;
 
     try {
+        // Rate limit the calls to the chat endpoints
+        await limits[options.model || "gpt-3.5-turbo"].perform(() => {});
+
         request = { model: options.model || "gpt-3.5-turbo", messages, ...options };
         response = await openai.post("/chat/completions", request);
 
@@ -59,6 +71,7 @@ async function chat(messages, options = {}) {
     } catch (error) {
         console.error("OpenAI: Error getting chat completion:", error);
         await supabase.from('openai_requests').insert({ endpoint: "/chat/completions", request: request, response: error, success: false });
+        throw error;
     }
 }
 
