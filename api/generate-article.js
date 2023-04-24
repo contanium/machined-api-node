@@ -19,6 +19,7 @@ router.post("/generate-article", async (req, res) => {
         var outline = req.body.outline;
         var article = req.body.article;
         var callback = req.body.callback;
+        var metadata = req.body.metadata;
         var output;
 
         if (!app) {
@@ -42,9 +43,9 @@ router.post("/generate-article", async (req, res) => {
             try {
                 console.log(`${cid} > Generating article...`);
 
-                title = title || await articles.title(cid, { model, topic, title, keyword, title, outline });
-                outline = outline || await articles.outline(cid, { model, topic, title, keyword, title, outline });
-                article = article || await articles.article(cid, { model, topic, title, keyword, title, outline });
+                title = title || await articles.title(cid, app, metadata, { model, topic, title, keyword, title, outline });
+                outline = outline || await articles.outline(cid, app, metadata, { model, topic, title, keyword, title, outline });
+                article = article || await articles.article(cid, app, metadata, { model, topic, title, keyword, title, outline });
 
                 if (callback) {
                     console.log(`${cid} > Executing callback to '${callback}'`);

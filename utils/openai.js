@@ -34,7 +34,7 @@ async function prompt(prompt, options = {}) {
     return { messages: messages, options: { model: options.model || prompt.data[0].model.name, temperature: prompt.data[0].temperature, top_p: prompt.data[0].top_p } };
 }
 
-async function moderate(input, options = {}) {
+async function moderate(cid, app, metadata, input, options = {}) {
     var request;
     var response;
 
@@ -42,18 +42,18 @@ async function moderate(input, options = {}) {
         request = { input: input, ...options };
         response = await openai.post("/moderations", request);
 
-        await supabase.from("openai_requests").insert({ endpoint: "/moderations", request: request, response: response.data, success: true });
+        await supabase.from("openai_requests").insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/moderations", request: request, response: response.data, success: true });
 
         return response.data.results[0];
 
     } catch (error) {
         console.error("OpenAI: Error getting moderation:", error);
-        await supabase.from("openai_requests").insert({ endpoint: "/moderations", request: request, response: error, success: false });
+        await supabase.from("openai_requests").insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/moderations", request: request, response: error, metadata: metadata, success: false });
         throw error;
     }
 }
 
-async function chat(messages, options = {}) {
+async function chat(cid, app, metadata, messages, options = {}) {
     var request;
     var response;
 
@@ -64,13 +64,13 @@ async function chat(messages, options = {}) {
         request = { model: options.model || "gpt-3.5-turbo", messages, ...options };
         response = await openai.post("/chat/completions", request);
 
-        await supabase.from('openai_requests').insert({ endpoint: "/chat/completions", request: request, response: response.data, success: true });
+        await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: response.data, metadata: metadata, success: true });
 
         return response.data.choices;
 
     } catch (error) {
         console.error("OpenAI: Error getting chat completion:", error);
-        await supabase.from('openai_requests').insert({ endpoint: "/chat/completions", request: request, response: error, success: false });
+        await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: error, metadata: metadata, success: false });
         throw error;
     }
 }

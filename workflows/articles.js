@@ -1,11 +1,11 @@
 const supabase = require("./../utils/supabase");
 const openai = require("./../utils/openai");
 
-async function title(cid, options = {}) {
+async function title(cid, app, metadata, options = {}) {
     console.log(`${cid} > Generating title`);
 
     const prompt = await openai.prompt("generate-title", options);
-    const response = await openai.chat(prompt.messages, prompt.options);
+    const response = await openai.chat(cid, app, metadata, prompt.messages, prompt.options);
 
     const title = response[0].message.content.replaceAll("\"", "");
 
@@ -14,11 +14,11 @@ async function title(cid, options = {}) {
     return title;
 }
 
-async function outline(cid, options = {}) {
+async function outline(cid, app, metadata, options = {}) {
     console.log(`${cid} > Generating outline`);
 
     const prompt = await openai.prompt("generate-outline", options);
-    const response = await openai.chat(prompt.messages, prompt.options);
+    const response = await openai.chat(cid, app, metadata, prompt.messages, prompt.options);
 
     const outline = response[0].message.content;
 
@@ -27,11 +27,11 @@ async function outline(cid, options = {}) {
     return outline;
 }
 
-async function section(cid, index, options = {}) {
+async function section(cid, app, metadata, index, options = {}) {
     console.log(`${cid} > Writing section ${index}`);
 
     const prompt = await openai.prompt("write-section", options);
-    const response = await openai.chat(prompt.messages, prompt.options);
+    const response = await openai.chat(cid, app, metadata, prompt.messages, prompt.options);
 
     var section = response[0].message.content;
 
@@ -40,7 +40,7 @@ async function section(cid, index, options = {}) {
     return section;
 }
 
-async function article(cid, options = {}) {
+async function article(cid, app, metadata, options = {}) {
     console.log(`${cid} > Generating article content`);
 
     var article;
@@ -48,7 +48,7 @@ async function article(cid, options = {}) {
 
     await Promise.all(
         await options.outline.split("\n\n").map(async (s, index) => {
-            sections[index] = await section(cid, index, { section: s, ...options });
+            sections[index] = await section(cid, app, metadata, index, { section: s, ...options} );
         })
     );
 
