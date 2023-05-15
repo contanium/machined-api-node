@@ -28,6 +28,7 @@ app.use(async (req, res, next) => {
   } catch (error) {
     res.statusCode = 401;
     res.json({ error: error.message });
+    return;
   }
 
   next()
