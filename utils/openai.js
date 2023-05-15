@@ -61,7 +61,7 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
 
         // Rate limit the calls to the chat endpoints
         const hash = crypto.createHash('md5').update(key).digest('hex');
-        limits[model][hash] = limits[model][hash] || new limiter({ limit: 2, timespan: 1000 }); // TODO - limits based on model
+        limits[model][hash] = limits[model][hash] || new limiter({ limit: 1, timespan: 1000 }); // TODO - limits based on model
         await limits[model][hash].perform(() => {});
 
         request = { model: model, messages, ...options };
