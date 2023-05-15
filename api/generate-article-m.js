@@ -43,7 +43,6 @@ router.post("/generate-article-m", async (req, res) => {
                 console.log(`${req._cid} > Generating article...`);
 
                 title = title || await articles.title(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, perspective, tone_of_voice, references });
-                throw new Error("Boom");
                 outline = outline || await articles.outline(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, perspective, tone_of_voice, references });
                 article = article || await articles.article(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, perspective, tone_of_voice, references });
 
