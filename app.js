@@ -23,14 +23,13 @@ app.use((req, res, next) => {
 });
 
 app.use(async (req, res, next) => {
-  req._app = await security.authenticate(req);
-  if (!req._app) {
-    console.log(`${req._cid} > Error: Unauthorized`);
-
+  try {
+    req._app = await security.authenticate(req);
+  } catch (error) {
     res.statusCode = 401;
-    res.json({ error: "Unauthenticated" });
-    return;
+    res.json({ error: error.message });
   }
+
   next()
 });
 
