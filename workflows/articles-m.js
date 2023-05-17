@@ -46,15 +46,15 @@ async function article(cid, app, key, metadata, options = {}) {
     var article;
     const sections = [];
 
-    // await Promise.all(
-    //     await options.outline.split("\n\n").map(async (s, index) => {
-    //         sections[index] = await section(cid, app, key, metadata, index, { section: s, ...options} );
-    //     })
-    // );
+    await Promise.all(
+        await options.outline.split("\n\n").map(async (s, index) => {
+            sections[index] = await section(cid, app, key, metadata, index, { section: s, ...options} );
+        })
+    );
 
-    for (const [index, s] of options.outline.split("\n\n").entries()) {
-        sections[index] = await section(cid, app, key, metadata, index, { section: s, ...options} );
-    }
+    // for (const [index, s] of options.outline.split("\n\n").entries()) {
+    //     sections[index] = await section(cid, app, key, metadata, index, { section: s, ...options} );
+    // }
 
     article = sections.join("\n\n");
     article = article.replaceAll("## Introduction\n", "");

@@ -65,7 +65,11 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
         await limits[model][hash].perform(() => {});
 
         request = { model: model, messages, ...options };
-        response = await openai.post("/chat/completions", request, { headers: {"Authorization": `Bearer ${key}`}});
+        response = await retry(
+            () => openai.post("/chat/completions", request, { headers: {"Authorization": `Bearer ${key}`}}),
+            (num, delay) => console.log(`${cid} > Rate limit from openai, retry number ${num} in ${delay} ms`),
+            e => e?.response?.status == 429,
+            5);
 
         await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: response.data, metadata: metadata, success: true });
 
@@ -81,5 +85,45 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
         throw new Error("OpenAI (chat): Unknown error");
     }
 }
+
+function retry(promise, onRetry, shouldRetry, maxRetries) {
+    // Notice that we declare an inner function here
+    // so we can encapsulate the retries and don't expose
+    // it to the caller. This is also a recursive function
+    async function retryWithBackoff(retries) {
+      // Here is where the magic happens.
+      // on every retry, we increase the time to wait exponentially.
+      // Here is how it looks for a `maxRetries` = 4
+      // (2 ** 1) * 1000 = 2000 ms
+      // (2 ** 2) * 1000 = 4000 ms
+      // (2 ** 3) * 1000 = 8000 ms
+      const timeToWait = 2 ** retries * 1000;
+      try {
+        // Make sure we don't wait on the first attempt
+        if (retries > 0) {
+          console.log(`retry, waiting for ${timeToWait}ms...`);
+          await waitFor(timeToWait);
+        }
+        console.log("running work");
+        return await promise();
+      } catch (e) {
+        // only retry if we didn't reach the limit
+        // otherwise, let the caller handle the error
+        if (shouldRetry(e) && retries < maxRetries) {
+          onRetry(retries + 1, timeToWait);
+          return retryWithBackoff(retries + 1);
+        } else {
+          console.warn("Max retries reached. Bubbling the error up");
+          throw e;
+        }
+      }
+    }
+
+  return retryWithBackoff(0);
+}
+
+function waitFor(milliseconds) {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds));
+  }
 
 module.exports = { prompt, moderate, chat };
