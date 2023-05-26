@@ -23,6 +23,7 @@ router.post("/generate-article-m", async (req, res) => {
         var article = req.body.article;
 
         var audience = req.body.audience;
+        var language = req.body.language || "English (US)";
         var perspective = req.body.perspective;
         var tone_of_voice = req.body.tone_of_voice;
         var references = req.body.references;
@@ -42,9 +43,9 @@ router.post("/generate-article-m", async (req, res) => {
             try {
                 console.log(`${req._cid} > Generating article...`);
 
-                title = title || await articles.title(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, perspective, tone_of_voice, references });
-                outline = outline || await articles.outline(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, perspective, tone_of_voice, references });
-                article = article || await articles.article(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, perspective, tone_of_voice, references });
+                title = title || await articles.title(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, language, perspective, tone_of_voice, references });
+                outline = outline || await articles.outline(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, language, perspective, tone_of_voice, references });
+                article = article || await articles.article(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, language, perspective, tone_of_voice, references });
 
                 console.log(`${req._cid} > Article generated`);
 

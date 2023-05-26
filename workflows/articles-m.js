@@ -48,7 +48,12 @@ async function article(cid, app, key, metadata, options = {}) {
 
     await Promise.all(
         await options.outline.split("\n\n").map(async (s, index) => {
+
             sections[index] = await section(cid, app, key, metadata, index, { section: s, ...options} );
+            
+            // HACK: The below 'references' hack/variant ensures that we only ever see links in the introduction (aka first section)...
+            //sections[index] = await section(cid, app, key, metadata, index, { section: s, ...options, references: index == 0 ? options.references : ''} );
+            
         })
     );
 
