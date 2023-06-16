@@ -68,7 +68,7 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
         response = await retry(
             () => openai.post("/chat/completions", request, { headers: {"Authorization": `Bearer ${key}`}}),
             (num, delay) => console.log(`${cid} > Rate limit from openai, retry number ${num} in ${delay} ms`),
-            e => e?.response?.status == 429,
+            e => e?.response?.status == 429 || e?.response?.status == 502,
             5);
 
         await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: response.data, metadata: metadata, success: true });
