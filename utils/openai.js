@@ -59,6 +59,15 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
     try {
         const model = options.model || "gpt-3.5-turbo";
 
+        // Cache
+        const cache = crypto.createHash('md5').update(JSON.stringify({ metadata, options, messages })).digest('hex');
+        const cached = await supabase.from("openai_cache").select('*').eq("hash", cache).limit(1);
+
+        if (cached.data.length > 0){
+          console.log("Returning cached openai request");
+          return cached.data[0].response;
+        }
+
         // Rate limit the calls to the chat endpoints
         const hash = crypto.createHash('md5').update(key).digest('hex');
         limits[model][hash] = limits[model][hash] || new limiter({ limit: 1, timespan: 1000 }); // TODO - limits based on model
@@ -66,12 +75,13 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
 
         request = { model: model, messages, ...options };
         response = await retry(
-            () => openai.post("/chat/completions", request, { headers: {"Authorization": `Bearer ${key}`}}),
+            () => openai.post("/chat/completions", request, { headers: {"Authorization": `Bearer ${key}`}}),//.then(res => console.log(JSON.stringify({ "timestamp": Date.now(), "remote-address":"-", "method":"POST", "url":"https://api.openai.com/v1/chat/completions", "status":res.status, "content-length":"-", "referrer":"-", "user-agent":"-", "req-headers":res.request.getHeaders(), "res-headers":res.headers }))),
             (num, delay) => console.log(`${cid} > Rate limit from openai, retry number ${num} in ${delay} ms`),
             e => e?.response?.status == 429 || e?.response?.status == 502 || e?.response?.status == 503,
             5);
 
         await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: response.data, metadata: metadata, success: true });
+        await supabase.from('openai_cache').insert({ trace: cid, metadata: metadata, hash: cache, response: response.data.choices });
 
         return response.data.choices;
 
@@ -104,7 +114,7 @@ function retry(promise, onRetry, shouldRetry, maxRetries) {
           console.log(`retry, waiting for ${timeToWait}ms...`);
           await waitFor(timeToWait);
         }
-        console.log("running work");
+        //console.log("running work");
         return await promise();
       } catch (e) {
         // only retry if we didn't reach the limit
