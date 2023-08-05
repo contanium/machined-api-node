@@ -35,6 +35,9 @@ router.post("/generate/:prompt", async (req, res) => {
         const options = req.body;
         const metadata = req.body.metadata;
 
+        // avoid cache
+        metadata.version = req._cid;
+
         const template = await openai.prompt(prompt, options, version);
         const response = await openai.chat(req._cid, req._app, key, metadata, template.messages, template.options);
 

@@ -9,6 +9,7 @@ const openai = axios.create({
     headers: { "Content-Type": "application/json" },
 });
 
+limits["gpt-3.5-turbo-0301"] = {};
 limits["gpt-3.5-turbo"] = {};
 limits["gpt-4"] = {};
 
