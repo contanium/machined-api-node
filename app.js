@@ -12,6 +12,7 @@ const api_crypto = require("./api/encrypt");
 const api_generate = require("./api/generate");
 const api_articles = require("./api/generate-article");
 const api_articles_m = require("./api/generate-article-m");
+const api_articles_x = require("./api/generate-article-x");
 
 
 app.use(express.json());
@@ -43,6 +44,7 @@ app.use("/api", api_crypto);
 app.use("/api", api_generate);
 app.use("/api", api_articles);
 app.use("/api", api_articles_m);
+app.use("/api", api_articles_x);
 
 app.use((err, req, res, next) => {
   console.error(err.stack)
