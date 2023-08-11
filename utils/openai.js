@@ -89,7 +89,7 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
         return response.data.choices;
 
     } catch (error) {
-        console.error(`{ "component":"utils.openai.chat", "statusCode":"${error.response.status}", "statusText":"${error.response.statusText}", "statusMessage":"${error.response.statusMessage}", "key":"sk-*****${key.slice(-4)}", "model":"${options.model}", "metadata":"${JSON.stringify(metadata)}" }`);
+        console.error(`{ "component":"utils.openai.chat", "statusCode":"${error.response.status}", "statusText":"${error.response.statusText}", "statusMessage":"${error.response.statusMessage}", "key":"sk-*****${key.slice(-4)}", "model":"${options.model}", "metadata":${JSON.stringify(metadata)} }`);
         console.error("OpenAI: Error getting chat completion:", error);
         await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: error, metadata: metadata, success: false });
 
