@@ -81,7 +81,7 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
             () => openai.post("/chat/completions", request, { headers: {"Authorization": `Bearer ${key}`}}),//.then(res => console.log(JSON.stringify({ "timestamp": Date.now(), "remote-address":"-", "method":"POST", "url":"https://api.openai.com/v1/chat/completions", "status":res.status, "content-length":"-", "referrer":"-", "user-agent":"-", "req-headers":res.request.getHeaders(), "res-headers":res.headers }))),
             (num, delay) => console.log(`${cid} > Rate limit from openai, retry number ${num} in ${delay} ms`),
             e => e?.response?.status == 429 || e?.response?.status == 502 || e?.response?.status == 503,
-            5);
+            6);
 
         await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: response.data, metadata: metadata, success: true });
         await supabase.from('openai_cache').insert({ trace: cid, metadata: metadata, hash: cache, response: response.data.choices });

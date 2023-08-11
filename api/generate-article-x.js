@@ -4,6 +4,10 @@ const express = require("express");
 const crypto = require("crypto");
 const axios = require("axios");
 
+const limiter = require("async-rate-limit");
+const limits = { "gpt-3.5-turbo": {}, "gpt-4": {} }
+const rpm = { "gpt-3.5-turbo": 10, "gpt-4": 1 }
+
 const router = express.Router();
 
 router.post("/generate/x/article", async (req, res) => {
@@ -46,7 +50,10 @@ router.post("/generate/x/article", async (req, res) => {
             return;
         }
 
-        var defer = new Promise(async (resolve, reject) => {
+        const hash = crypto.createHash('md5').update(key).digest('hex');
+        limits[model][hash] = limits[model][hash] || new limiter({ limit: rpm[model], timespan: 60000 });
+
+        var defer = limits[model][hash].perform(async () => {
 
             try {
                 console.log(`${req._cid} > Generating article...`);
@@ -58,14 +65,14 @@ router.post("/generate/x/article", async (req, res) => {
                 console.log(`${req._cid} > Article generated`);
 
                 run_callback(req, callback, title, article);
-                resolve();
+                //resolve();
 
             } catch (error) {
                 console.log(`${req._cid} > Error generating article`);
                 console.log(`${req._cid} > ${error}`);
 
                 run_callback(req, callback, title, article, "Error creating article...");
-                resolve();
+                //resolve();
             }
         });
 
