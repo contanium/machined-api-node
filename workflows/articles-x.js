@@ -30,7 +30,7 @@ async function outline(cid, app, key, metadata, options = {}) {
 async function section(cid, app, key, metadata, index, options = {}) {
     console.log(`${cid} > Writing section ${index}`);
 
-    //options.model = options.model == "gpt-3.5-turbo" ? "gpt-3.5-turbo-0301" : options.model;
+    options.model = options.model == "gpt-3.5-turbo" ? "gpt-3.5-turbo-16k" : options.model;
     //options.model = options.model == "gpt-4" ? "gpt-4-0314" : options.model;
 
     const prompt = await openai.prompt("x-generate-section", options);

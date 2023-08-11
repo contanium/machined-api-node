@@ -10,6 +10,7 @@ const openai = axios.create({
 });
 
 limits["gpt-3.5-turbo-0301"] = {};
+limits["gpt-3.5-turbo-16k"] = {};
 limits["gpt-3.5-turbo"] = {};
 limits["gpt-4-0314"] = {};
 limits["gpt-4"] = {};
@@ -88,6 +89,7 @@ async function chat(cid, app, key, metadata, messages, options = {}) {
         return response.data.choices;
 
     } catch (error) {
+        console.error(`{ "component":"utils.openai.chat", "statusCode":"${error.response.status}", "statusText":"${error.response.statusText}", "statusMessage":"${error.response.statusMessage}", "key":"sk-*****${key.slice(-4)}", "model":"${options.model}", "metadata":"${JSON.stringify(metadata)}" }`);
         console.error("OpenAI: Error getting chat completion:", error);
         await supabase.from('openai_requests').insert({ trace: cid, app: app.id, metadata: metadata, endpoint: "/chat/completions", request: request, response: error, metadata: metadata, success: false });
 
