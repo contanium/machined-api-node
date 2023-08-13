@@ -1,25 +1,53 @@
 const security = require("./../utils/security");
 const openai = require("./../utils/openai");
 const express = require("express");
+const axios = require("axios");
+const api = axios.create({
+    baseURL: "https://api.openai.com/v1",
+    headers: { "Content-Type": "application/json" },
+});
 
 const router = express.Router();
 
 router.get("/verify/:key", async (req, res) => {
-    console.log(`${req._cid} > Verifying openai api key`);
+    console.log(`${req._cid} > Verifying openai account`);
+
+    var headers = { "Authorization": `Bearer ${req.params.key}` };
+    var models = ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"];
+    var result = [];
 
     try {
-        const template = await openai.prompt("hello-world", {}, 1);
-        const response = await openai.chat(req._cid, req._app, req.params.key, {}, template.messages, template.options);
+        var m = await api.get("/models", { headers });
 
-        if (response[0].message.content) res.statusCode = 200; else res.statusCode = 400;
+        for (let i = 0; i < models.length; i++) {
+            try {
+                var response = await api.post("/chat/completions", { model: models[i], messages: [ { role: "user", content: "Hi" } ] }, { headers });
+        
+                result.push({ model: models[i], available: response.status == 200, tpm: parseInt(response.headers["x-ratelimit-limit-tokens"]), rpm: parseInt(response.headers["x-ratelimit-limit-requests"]) });
+        
+            } catch (error) {
+                result.push({ model: models[i], available: false, tpm: 0, rpm: 0 });
+            } 
+        }
+
+        // HACK: To figure out account status, we look at the limits (https://platform.openai.com/docs/guides/rate-limits/what-are-the-rate-limits-for-our-api)
+        if (result.find(e => e.model == "gpt-3.5-turbo").tpm < 50000){
+            res.statusCode = 402;
+            res.statusMessage = "Specified openai account is on the free tier";
+            res.json({});
+        }
+        else {
+            res.statusCode = 200;
+            res.json(result);
+        }
+
     } catch (error) {
-        console.log(`${req._cid} > Provided openai api key invalid`);
-        res.statusCode = 400;
+        res.statusCode = 401;
+        res.statusMessage = "Provided openai api key invalid";
+        res.json({});
     }
 
-    res.json({});
-
-    console.log(`${req._cid} > Verifying openai api key - done`);
+    console.log(`${req._cid} > Verifying openai account - done`);
 });
 
 router.post("/generate/:prompt", async (req, res) => {
