@@ -23,6 +23,7 @@ router.post("/generate/x/article", async (req, res) => {
         var title = req.body.title;
         var outline = req.body.outline;
         var article = req.body.article;
+        var description = req.body.description;
 
         var topic = req.body.topic;
         var keyword = req.body.keyword;
@@ -61,17 +62,18 @@ router.post("/generate/x/article", async (req, res) => {
                 title = title || await articles.title(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, language, perspective, tone_of_voice, references });
                 outline = outline || await articles.outline(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, language, perspective, tone_of_voice, references });
                 article = article || await articles.article(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, language, perspective, tone_of_voice, references });
+                description = description || await articles.description(req._cid, req._app, key, metadata, { model, topic, title, keyword, outline, audience, language, perspective, tone_of_voice, references });
 
                 console.log(`${req._cid} > Article generated`);
 
-                run_callback(req, callback, title, article);
+                run_callback(req, callback, title, article, description);
                 //resolve();
 
             } catch (error) {
                 console.log(`${req._cid} > Error generating article`);
                 console.log(`${req._cid} > ${error}`);
 
-                run_callback(req, callback, title, article, "Error creating article...");
+                run_callback(req, callback, title, article, description, "Error creating article...");
                 //resolve();
             }
         });
@@ -82,7 +84,7 @@ router.post("/generate/x/article", async (req, res) => {
 
             await defer;
 
-            output = { cid: req._cid, topic, title, outline, article };
+            output = { cid: req._cid, topic, title, outline, article, description };
         }
         else {
             console.log(`${req._cid} > There is a callback so running in background...`);
@@ -104,7 +106,7 @@ router.post("/generate/x/article", async (req, res) => {
     }
 });
 
-async function run_callback(req, callback, title, content, error){
+async function run_callback(req, callback, title, content, description, error){
     if (callback) {
         console.log(`${req._cid} > Executing callback to '${callback}'`);
 
@@ -114,7 +116,7 @@ async function run_callback(req, callback, title, content, error){
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${req._app.callback_key}`
                 }
-            }).post(callback, { title: title, content, error });
+            }).post(callback, { title: title, content, description, error });
         } catch (error) {
             console.log(`${req._cid} > Error calling callback`);
             console.log(`${req._cid} > ${error}`);

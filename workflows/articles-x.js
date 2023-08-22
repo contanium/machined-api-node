@@ -27,6 +27,19 @@ async function outline(cid, app, key, metadata, options = {}) {
     return outline;
 }
 
+async function description(cid, app, key, metadata, options = {}) {
+    console.log(`${cid} > Generating description`);
+
+    const prompt = await openai.prompt("x-generate-meta-description", options);
+    const response = await openai.chat(cid, app, key, metadata, prompt.messages, prompt.options);
+
+    const description = response[0].message.content;
+
+    console.log(`${cid} > Generating description - done`);
+
+    return description;
+}
+
 async function section(cid, app, key, metadata, index, options = {}) {
     console.log(`${cid} > Writing section ${index}`);
 
@@ -72,4 +85,4 @@ async function article(cid, app, key, metadata, options = {}) {
     return article;
 }
 
-module.exports = { title, outline, section, article };
+module.exports = { title, outline, section, article, description };
