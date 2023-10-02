@@ -46,7 +46,9 @@ async function section(cid, app, key, metadata, index, options = {}) {
     options.model = options.model == "gpt-3.5-turbo" ? "gpt-3.5-turbo-16k" : options.model;
     //options.model = options.model == "gpt-4" ? "gpt-4-0314" : options.model;
 
-    const prompt = await openai.prompt("x-generate-section", options);
+    var template = options.references != "null" ? "x-generate-section" : "x-generate-section-nolinks";
+
+    const prompt = await openai.prompt(template, options);
     const response = await openai.chat(cid, app, key, metadata, prompt.messages, prompt.options);
 
     var section = response[0].message.content;
