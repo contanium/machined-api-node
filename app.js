@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 
 // Routes
 const api_crypto = require("./api/encrypt");
+const api_imagine = require("./api/imagine");
 const api_generate = require("./api/generate");
 const api_articles = require("./api/generate-article");
 const api_articles_m = require("./api/generate-article-m");
@@ -41,6 +42,7 @@ app.get("/healthz", (req, res) => res.statusCode = 200);
 
 // Add Application APIs
 app.use("/api", api_crypto);
+app.use("/api", api_imagine);
 app.use("/api", api_generate);
 app.use("/api", api_articles);
 app.use("/api", api_articles_m);
